@@ -29,7 +29,9 @@ public final class RemoteFeedLoader{
     }
     
     public func load(completion:@escaping(Result)->Void){
-        client.get(from: url) { result in
+        client.get(from: url) { [weak self] result in    //after sut has been deallocated now captured results can be empty
+            //guard let self=self else {return}    if it was deallocated,the last part wasnt going to be executed
+            guard self != nil else {return}
             switch result{
             case let .success(data,response):
                 completion(FeedItemsMapper.map(data, from: response))
