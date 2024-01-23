@@ -63,7 +63,7 @@ final class URLSessionHTTPClientTests: XCTestCase {
         let error=NSError(domain: "any error", code: 1)
         //let session=HTTPSessionSpy()
         //let task=URLSessionDataTaskSpy()
-        URLProtocolStub.stub(url:url,error:error)
+        URLProtocolStub.stub(url:url,data:nil,response:nil,error:error)
         
         let sut=URLSessionHTTPClient()
         
@@ -89,6 +89,8 @@ final class URLSessionHTTPClientTests: XCTestCase {
         
         private struct Stub{
             //let task:HTTPSessionTask
+            let data:Data?
+            let response:URLResponse?
             let error:Error?
         }
         
@@ -96,8 +98,8 @@ final class URLSessionHTTPClientTests: XCTestCase {
 //            stubs[url]=Stub(task: task, error: error)
 //        }
         
-        static func stub(url:URL,error:Error?=nil){
-            stubs[url]=Stub(error: error)
+        static func stub(url:URL,data:Data?,response:URLResponse?,error:Error?){
+            stubs[url]=Stub(data: data, response: response, error: error)
         }
         
         static func startInterceptingRequests(){
@@ -125,6 +127,12 @@ final class URLSessionHTTPClientTests: XCTestCase {
             //instance method->we are gonna handle this request
             guard let url=request.url,let stub=URLProtocolStub.stubs[url] else {return}
             
+            if let data=stub.data{
+                client?.urlProtocol(self, didLoad: data)
+            }
+            if let response=stub.response{
+                client?.urlProtocol(self, didReceive: response,cacheStoragePolicy: .notAllowed)
+            }
             if let error=stub.error{
                 client?.urlProtocol(self, didFailWithError: error)
             }
